@@ -3,13 +3,28 @@ import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
 
+<<<<<<< HEAD
 // We load json files as data source
 import SALES from "./sources/vinted.json" with { type: "json" };
+=======
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'url';
+import path from 'path';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+>>>>>>> fbb68ff (docs(api): create the workhop 4 about api with express)
 
 const PORT = 8092;
 
 const app = express();
 
+<<<<<<< HEAD
+=======
+// We load json files as data source
+let SALES = {};
+
+>>>>>>> fbb68ff (docs(api): create the workhop 4 about api with express)
 app.use(bodyParser.json());
 app.use(cors());
 app.use(helmet());
@@ -46,6 +61,19 @@ app.get('/sales/search', (request, response) => {
 });
 
 
+<<<<<<< HEAD
 app.listen(PORT)
+=======
+app.listen(PORT, () => {
+  // when we start the server we load available json files
+  try {
+    SALES = JSON.parse(
+      readFileSync(path.join(__dirname, 'sources', 'vinted.json'), 'utf8')
+    );
+  } catch (error) {
+    console.warn(`⚠️  ${error}`);
+  }
+})
+>>>>>>> fbb68ff (docs(api): create the workhop 4 about api with express)
 
 console.log(`📡 Running on port ${PORT}`);
