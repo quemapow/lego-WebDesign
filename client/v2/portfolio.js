@@ -26,6 +26,7 @@ let currentDeals = [];
 let currentPagination = {};
 let currentFilter = null;
 let currentSort = null;
+let showFavoritesOnly = false;
 let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
 
 // instantiate the selectors
@@ -295,7 +296,8 @@ const renderSalesStats = sales => {
 };
 
 const render = (deals, pagination) => {
-  const filteredDeals = currentFilter ? filterDeals(deals, currentFilter) : deals;
+  let filteredDeals = currentFilter ? filterDeals(deals, currentFilter) : deals;
+  filteredDeals = showFavoritesOnly ? filteredDeals.filter(deal => isFavorite(deal.uuid, favorites)) : filteredDeals;
   const sortedDeals = currentSort ? sortDeals(filteredDeals, currentSort) : filteredDeals;
   renderDeals(sortedDeals);
   renderPagination(pagination);
@@ -357,6 +359,14 @@ filterSpans[1].addEventListener('click', () => {
  */
 filterSpans[2].addEventListener('click', () => {
   currentFilter = currentFilter === 'hot-deals' ? null : 'hot-deals';
+  render(currentDeals, currentPagination);
+});
+
+/**
+ * Filter by favorites
+ */
+filterSpans[3].addEventListener('click', () => {
+  showFavoritesOnly = !showFavoritesOnly;
   render(currentDeals, currentPagination);
 });
 
