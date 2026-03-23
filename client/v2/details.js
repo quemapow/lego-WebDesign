@@ -130,18 +130,11 @@ const displayDealDetails = (deal, vintedAvgPrice = 0) => {
 
   // Action buttons
   const btnDealabs = document.getElementById('btnOpenDealabs');
-  const btnVinted = document.getElementById('btnOpenVinted');
 
   if (deal.link) {
     btnDealabs.onclick = () => window.open(deal.link, '_blank');
   } else {
     btnDealabs.disabled = true;
-  }
-
-  if (deal.vinted_link) {
-    btnVinted.onclick = () => window.open(deal.vinted_link, '_blank');
-  } else {
-    btnVinted.disabled = true;
   }
 };
 

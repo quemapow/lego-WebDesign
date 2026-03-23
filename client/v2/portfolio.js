@@ -49,13 +49,17 @@ const spanAvgProfit = document.querySelector('#avgProfit');
 const spanSavedItems = document.querySelector('#savedItems');
 const spanResultsCount = document.querySelector('#resultsCount');
 
-const selectCategory = document.querySelector('#category-select');
-const inputMinProfit = document.querySelector('#min-profit');
-const inputMaxPrice = document.querySelector('#max-price');
+
 const btnApplyFilters = document.querySelector('.btn-apply-filters');
 const btnResetFilters = document.querySelector('.btn-reset-filters');
 const searchInput = document.querySelector('#search-input');
 const searchBtn = document.querySelector('.search-btn');
+
+// Quick filter buttons
+const btnFilterBestDiscount = document.querySelector('#filterBestDiscount');
+const btnFilterMostCommented = document.querySelector('#filterMostCommented');
+const btnFilterHotDeals = document.querySelector('#filterHotDeals');
+const btnFilterFavorites = document.querySelector('#filterFavorites');
 
 /**
  * Set global value
@@ -136,6 +140,76 @@ const filterDeals = (deals, filterType) => {
 };
 
 /**
+ * Calculate average price from Vinted sales
+ */
+const calculateVintedAverage = (sales) => {
+  console.log('calculateVintedAverage - received:', sales);
+  
+  if (!sales || !sales.result || sales.result.length === 0) {
+    console.log('No Vinted sales found');
+    return 0;
+  }
+
+  const prices = sales.result
+    .map(sale => getPriceFromSale(sale))
+    .filter(price => price > 0);
+
+  console.log('Extracted prices:', prices);
+
+  if (prices.length === 0) {
+    console.log('No valid prices found');
+    return 0;
+  }
+
+  const average = prices.reduce((sum, price) => sum + price, 0) / prices.length;
+  console.log('Calculated average:', average);
+  
+  return average;
+};
+
+/**
+ * Enrich deals with Vinted average prices
+ */
+const enrichDealsWithVintedAverages = async (deals) => {
+  try {
+    console.log('Starting to enrich deals with Vinted averages...', deals.length);
+    
+    // Fetch Vinted sales for each deal in parallel
+    const salesPromises = deals.map(deal => 
+      fetchSales(deal.id)
+        .then(sales => {
+          const avg = calculateVintedAverage(sales);
+          console.log(`Deal ${deal.id}: Vinted average = €${avg.toFixed(2)}`);
+          return {
+            uuid: deal.uuid,
+            average: avg
+          };
+        })
+    );
+
+    const averagePrices = await Promise.all(salesPromises);
+
+    // Create a map of uuid -> average price
+    const priceMap = {};
+    averagePrices.forEach(item => {
+      priceMap[item.uuid] = item.average;
+    });
+
+    // Enrich deals with vinted average
+    const enrichedDeals = deals.map(deal => ({
+      ...deal,
+      vintedAverage: priceMap[deal.uuid] || 0
+    }));
+    
+    console.log('Enrichment complete', enrichedDeals[0]);
+    return enrichedDeals;
+  } catch (error) {
+    console.error('Error enriching deals with Vinted averages:', error);
+    return deals;
+  }
+};
+
+/**
  * Sort deals
  * @param  {Array} deals
  * @param  {String} sortType - type of sort to apply
@@ -169,7 +243,7 @@ const sortDeals = (deals, sortType) => {
 const calculateProfit = (deal) => {
   if (!deal || !deal.price) return 0;
   const dealabsPrice = parseFloat(deal.price) || 0;
-  const vintedPrice = parseFloat(deal.vinted_price) || 0;
+  const vintedPrice = deal.vintedAverage > 0 ? deal.vintedAverage : parseFloat(deal.vinted_price) || 0;
   return vintedPrice > 0 ? vintedPrice - dealabsPrice : 0;
 };
 
@@ -189,6 +263,8 @@ const calculateProfitPercent = (deal) => {
  * @param  {Array} deals
  */
 const renderDeals = deals => {
+  console.log('Rendering deals:', deals[0]);
+  
   const container = document.createElement('div');
   container.className = 'deals-container';
   
@@ -196,9 +272,11 @@ const renderDeals = deals => {
     .map(deal => {
       const isFav = isFavorite(deal.uuid, favorites);
       const dealabsPrice = parseFloat(deal.price) || 0;
-      const vintedPrice = parseFloat(deal.vinted_price) || 150;
+      const vintedPrice = deal.vintedAverage > 0 ? deal.vintedAverage : parseFloat(deal.vinted_price) || 150;
       const profit = vintedPrice - dealabsPrice;
       const profitPercent = dealabsPrice > 0 ? Math.round((profit / dealabsPrice) * 100) : 0;
+      
+      console.log(`Card: ID ${deal.id}, vintedAverage: ${deal.vintedAverage}, using price: ${vintedPrice}`);
       
       return `
         <div class="deal-card" id="${deal.uuid}">
@@ -215,15 +293,15 @@ const renderDeals = deals => {
           </div>
           <div class="deal-content">
             <div class="price-row">
-              <div class="price-badge badge-dealabs">
+              <a href="${deal.link}" target="_blank" rel="noopener noreferrer" class="price-badge badge-dealabs" style="cursor: pointer; text-decoration: none; display: flex; flex-direction: column;">
                 <div class="price-label">DEALABS</div>
                 <div class="price-value">€${dealabsPrice.toFixed(2)}</div>
-              </div>
+              </a>
               <div class="price-badge badge-vinted">
                 <div class="price-label">VINTED</div>
                 <div class="price-value">€${vintedPrice.toFixed(2)}</div>
               </div>
-            </div>
+           </div>
             <div class="profit-row">
               <div class="profit-label">PROFIT</div>
               <div>
@@ -394,9 +472,14 @@ const renderSalesStats = sales => {
 };
 
 const render = (deals, pagination) => {
+  console.log('Render called with deals:', deals.length, deals[0]);
+  
   let filteredDeals = currentFilter ? filterDeals(deals, currentFilter) : deals;
   filteredDeals = showFavoritesOnly ? filteredDeals.filter(deal => isFavorite(deal.uuid, favorites)) : filteredDeals;
   const sortedDeals = currentSort ? sortDeals(filteredDeals, currentSort) : filteredDeals;
+  
+  console.log('After filtering/sorting:', sortedDeals[0]);
+  
   renderDeals(sortedDeals);
   renderPagination(pagination);
   renderIndicators(pagination);
@@ -413,7 +496,8 @@ const render = (deals, pagination) => {
  */
 selectShow.addEventListener('change', async (event) => {
   const deals = await fetchDeals(1, parseInt(event.target.value));
-
+  const enrichedDeals = await enrichDealsWithVintedAverages(deals.result);
+  deals.result = enrichedDeals;
   setCurrentDeals(deals);
   render(currentDeals, currentPagination);
 });
@@ -425,7 +509,8 @@ selectPage.addEventListener('change', async (event) => {
   const page = parseInt(event.target.value);
   const size = parseInt(selectShow.value);
   const deals = await fetchDeals(page, size);
-
+  const enrichedDeals = await enrichDealsWithVintedAverages(deals.result);
+  deals.result = enrichedDeals;
   setCurrentDeals(deals);
   render(currentDeals, currentPagination);
 });
@@ -442,29 +527,83 @@ selectSort.addEventListener('change', (event) => {
  * Apply filters
  */
 btnApplyFilters?.addEventListener('click', () => {
-  const minProfit = parseFloat(inputMinProfit.value) || 0;
-  const maxPrice = parseFloat(inputMaxPrice.value) || Infinity;
-  
-  const filtered = currentDeals.filter(deal => {
-    const profit = calculateProfit(deal);
-    const dealabsPrice = parseFloat(deal.price) || 0;
-    return profit >= minProfit && dealabsPrice <= maxPrice;
-  });
-  
-  const sortedDeals = currentSort ? sortDeals(filtered, currentSort) : filtered;
-  renderDeals(sortedDeals);
-  updateStatistics(sortedDeals);
+  render(currentDeals, currentPagination);
 });
 
 /**
  * Reset filters
  */
 btnResetFilters?.addEventListener('click', () => {
-  inputMinProfit.value = '';
-  inputMaxPrice.value = '';
+
   currentFilter = null;
   currentSort = null;
+  showFavoritesOnly = false;
   selectSort.value = 'profit-desc';
+  
+  // Deactivate all quick filters
+  btnFilterBestDiscount?.classList.remove('active');
+  btnFilterMostCommented?.classList.remove('active');
+  btnFilterHotDeals?.classList.remove('active');
+  btnFilterFavorites?.classList.remove('active');
+  
+  render(currentDeals, currentPagination);
+});
+
+/**
+ * Quick Filter - Best Discount (> 50%)
+ */
+btnFilterBestDiscount?.addEventListener('click', () => {
+  currentFilter = currentFilter === 'best-discount' ? null : 'best-discount';
+  btnFilterBestDiscount.classList.toggle('active');
+  
+  // Deactivate other quick filters (except favorites)
+  if (currentFilter === 'best-discount') {
+    btnFilterMostCommented?.classList.remove('active');
+    btnFilterHotDeals?.classList.remove('active');
+  }
+  
+  render(currentDeals, currentPagination);
+});
+
+/**
+ * Quick Filter - Most Commented (> 15 comments)
+ */
+btnFilterMostCommented?.addEventListener('click', () => {
+  currentFilter = currentFilter === 'most-commented' ? null : 'most-commented';
+  btnFilterMostCommented.classList.toggle('active');
+  
+  // Deactivate other quick filters (except favorites)
+  if (currentFilter === 'most-commented') {
+    btnFilterBestDiscount?.classList.remove('active');
+    btnFilterHotDeals?.classList.remove('active');
+  }
+  
+  render(currentDeals, currentPagination);
+});
+
+/**
+ * Quick Filter - Hot Deals (temperature > 100)
+ */
+btnFilterHotDeals?.addEventListener('click', () => {
+  currentFilter = currentFilter === 'hot-deals' ? null : 'hot-deals';
+  btnFilterHotDeals.classList.toggle('active');
+  
+  // Deactivate other quick filters (except favorites)
+  if (currentFilter === 'hot-deals') {
+    btnFilterBestDiscount?.classList.remove('active');
+    btnFilterMostCommented?.classList.remove('active');
+  }
+  
+  render(currentDeals, currentPagination);
+});
+
+/**
+ * Quick Filter - My Favorites
+ */
+btnFilterFavorites?.addEventListener('click', () => {
+  showFavoritesOnly = !showFavoritesOnly;
+  btnFilterFavorites.classList.toggle('active');
+  
   render(currentDeals, currentPagination);
 });
 
@@ -506,7 +645,8 @@ selectLegoSetIds.addEventListener('change', async (event) => {
  */
 document.addEventListener('DOMContentLoaded', async () => {
   const deals = await fetchDeals();
-
+  const enrichedDeals = await enrichDealsWithVintedAverages(deals.result);
+  deals.result = enrichedDeals;
   setCurrentDeals(deals);
   render(currentDeals, currentPagination);
   updateSavedCount();
