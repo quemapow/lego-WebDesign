@@ -480,6 +480,32 @@ const renderSales = sales => {
   const nbSales = result ? result.length : 0;
 
   spanNbSales.innerHTML = nbSales;
+
+  if (nbSales > 0) {
+    const prices = result.map(sale => getPriceFromSale(sale)).filter(price => price > 0);
+    
+    if (prices.length > 0) {
+      const p5 = calculatePercentile(prices, 5);
+      const p25 = calculatePercentile(prices, 25);
+      const p50 = calculatePercentile(prices, 50);
+      const average = prices.reduce((sum, price) => sum + price, 0) / prices.length;
+
+      spanP5SalesPrice.innerHTML = p5.toFixed(2);
+      spanP25SalesPrice.innerHTML = p25.toFixed(2);
+      spanP50SalesPrice.innerHTML = p50.toFixed(2);
+      spanAverageSalesPrice.innerHTML = average.toFixed(2);
+    } else {
+      spanP5SalesPrice.innerHTML = '0';
+      spanP25SalesPrice.innerHTML = '0';
+      spanP50SalesPrice.innerHTML = '0';
+      spanAverageSalesPrice.innerHTML = '0';
+    }
+  } else {
+    spanP5SalesPrice.innerHTML = '0';
+    spanP25SalesPrice.innerHTML = '0';
+    spanP50SalesPrice.innerHTML = '0';
+    spanAverageSalesPrice.innerHTML = '0';
+  }
 };
 
 const render = (deals, pagination) => {
