@@ -49,7 +49,6 @@ const spanAvgProfit = document.querySelector('#avgProfit');
 const spanSavedItems = document.querySelector('#savedItems');
 const spanResultsCount = document.querySelector('#resultsCount');
 
-
 const btnApplyFilters = document.querySelector('.btn-apply-filters');
 const btnResetFilters = document.querySelector('.btn-reset-filters');
 const searchInput = document.querySelector('#search-input');
@@ -366,33 +365,14 @@ const updateSavedCount = () => {
 };
 
 /**
- * Render list of sold items
- * @param  {Array} sales
+ * Update saved items count
  */
-const renderSoldItems = sales => {
-  if (!sales || sales.length === 0) {
-    sectionSales.innerHTML = '';
-    return;
+const updateSavedCount = () => {
+  spanSavedItems.textContent = favorites.length;
+  const btnExport = document.querySelector('.btn-export');
+  if (btnExport) {
+    btnExport.textContent = `📥 Export Saved (${favorites.length})`;
   }
-
-  const fragment = document.createDocumentFragment();
-  const div = document.createElement('div');
-  const template = sales
-    .map(sale => {
-      return `
-      <div class="sale" id=${sale.uuid}>
-        <span>${sale.title}</span>
-        <a href="${sale.link}" target="_blank" rel="noopener noreferrer">View on Vinted</a>
-        <span>${sale.price.amount} ${sale.price.currency_code}</span>
-      </div>
-    `;
-    })
-    .join('');
-
-  div.innerHTML = template;
-  fragment.appendChild(div);
-  sectionSales.innerHTML = '<h2>Sold Items</h2>';
-  sectionSales.appendChild(fragment);
 };
 
 /**
@@ -510,7 +490,6 @@ const renderSalesStats = sales => {
   const nbSales = result ? result.length : 0;
 
   spanNbSales.innerHTML = nbSales;
-  renderSoldItems(result);
 
   if (nbSales > 0) {
     const prices = result.map(sale => getPriceFromSale(sale)).filter(price => price > 0);
@@ -766,6 +745,58 @@ selectSort.addEventListener('change', (event) => {
 });
 
 /**
+ * Apply filters
+ */
+btnApplyFilters?.addEventListener('click', () => {
+  const minProfit = parseFloat(inputMinProfit.value) || 0;
+  const maxPrice = parseFloat(inputMaxPrice.value) || Infinity;
+  
+  const filtered = currentDeals.filter(deal => {
+    const profit = calculateProfit(deal);
+    const dealabsPrice = parseFloat(deal.price) || 0;
+    return profit >= minProfit && dealabsPrice <= maxPrice;
+  });
+  
+  const sortedDeals = currentSort ? sortDeals(filtered, currentSort) : filtered;
+  renderDeals(sortedDeals);
+  updateStatistics(sortedDeals);
+});
+
+/**
+ * Reset filters
+ */
+btnResetFilters?.addEventListener('click', () => {
+  inputMinProfit.value = '';
+  inputMaxPrice.value = '';
+  currentFilter = null;
+  currentSort = null;
+  selectSort.value = 'profit-desc';
+  render(currentDeals, currentPagination);
+});
+
+/**
+ * Search functionality
+ */
+searchBtn?.addEventListener('click', () => {
+  const searchTerm = searchInput.value.toLowerCase();
+  if (searchTerm) {
+    const filtered = currentDeals.filter(deal => 
+      deal.title.toLowerCase().includes(searchTerm) || 
+      deal.id.toString().includes(searchTerm)
+    );
+    const sortedDeals = currentSort ? sortDeals(filtered, currentSort) : filtered;
+    renderDeals(sortedDeals);
+    updateStatistics(sortedDeals);
+  }
+});
+
+searchInput?.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    searchBtn.click();
+  }
+});
+
+/**
  * Display sales for selected lego set id
  */
 selectLegoSetIds.addEventListener('change', async (event) => {
@@ -774,4 +805,16 @@ selectLegoSetIds.addEventListener('change', async (event) => {
     const sales = await fetchSales(id);
     renderSalesStats(sales);
   }
+});
+
+/**
+ * Initialize on page load
+ */
+document.addEventListener('DOMContentLoaded', async () => {
+  const deals = await fetchDeals();
+
+  setCurrentDeals(deals);
+  render(currentDeals, currentPagination);
+  updateSavedCount();
+  selectSort.value = 'profit-desc';
 });
