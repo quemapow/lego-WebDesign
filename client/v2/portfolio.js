@@ -151,6 +151,18 @@ selectShow.addEventListener('change', async (event) => {
   render(currentDeals, currentPagination);
 });
 
+/**
+ * Select the page to display
+ */
+selectPage.addEventListener('change', async (event) => {
+  const page = parseInt(event.target.value);
+  const size = parseInt(selectShow.value);
+  const deals = await fetchDeals(page, size);
+
+  setCurrentDeals(deals);
+  render(currentDeals, currentPagination);
+});
+
 document.addEventListener('DOMContentLoaded', async () => {
   const deals = await fetchDeals();
 
