@@ -131,9 +131,9 @@ console.log('Todo6');
 var filteredDeals = [];
 
 for (var i = 0; i < deals.length; i++) {
-    var discount = deals[i];
-    if (discount.discount >= 50 && discount.discount <= 75) {
-        filteredDeals.push(deals[i]);
+    var dealsd = deals[i];
+    if (dealsd.discount >= 50 && dealsd.discount <= 75) {
+        filteredDeals.push(dealsd);
     }
 }
 console.log('Filter deals with discount between 50% and 75%');
