@@ -12,6 +12,7 @@
     "express": "^5.2.1",
     "helmet": "^8.1.0",
     "parse-domain": "^8.3.0",
+    "puppeteer": "^24.40.0",
     "require-all": "^3.0.0",
     "uuid": "^13.0.0"
   },
