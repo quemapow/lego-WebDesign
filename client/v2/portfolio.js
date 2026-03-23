@@ -660,3 +660,11 @@ filterSpans[0].addEventListener('click', () => {
   currentFilter = currentFilter === 'best-discount' ? null : 'best-discount';
   render(currentDeals, currentPagination);
 });
+
+/**
+ * Filter by most commented
+ */
+filterSpans[1].addEventListener('click', () => {
+  currentFilter = currentFilter === 'most-commented' ? null : 'most-commented';
+  render(currentDeals, currentPagination);
+});
