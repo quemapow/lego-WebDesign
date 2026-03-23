@@ -39,6 +39,7 @@ const spanP5SalesPrice = document.querySelector('#p5SalesPrice');
 const spanP25SalesPrice = document.querySelector('#p25SalesPrice');
 const spanP50SalesPrice = document.querySelector('#p50SalesPrice');
 const spanAverageSalesPrice = document.querySelector('#averageSalesPrice');
+const spanLifetimeValue = document.querySelector('#lifetimeValue');
 const filterSpans = document.querySelectorAll('#filters span');
 
 /**
@@ -217,6 +218,9 @@ const renderSales = sales => {
 
   if (nbSales > 0) {
     const prices = result.map(sale => getPriceFromSale(sale)).filter(price => price > 0);
+    const lifetime = calculateLifetime(result);
+    
+    spanLifetimeValue.innerHTML = lifetime;
     
     if (prices.length > 0) {
       const p5 = calculatePercentile(prices, 5);
@@ -239,6 +243,7 @@ const renderSales = sales => {
     spanP25SalesPrice.innerHTML = '0';
     spanP50SalesPrice.innerHTML = '0';
     spanAverageSalesPrice.innerHTML = '0';
+    spanLifetimeValue.innerHTML = '0 days';
   }
 };
 

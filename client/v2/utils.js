@@ -59,3 +59,30 @@ const getPriceFromSale = (sale) => {
   }
   return 0;
 }
+
+/**
+ * Calculate lifetime from array of sales
+ * @param {Array} sales - array of sales objects
+ * @returns {String} lifetime formatted as string (e.g., "30 days")
+ */
+const calculateLifetime = (sales) => {
+  if (!sales || sales.length < 2) {
+    return '0 days';
+  }
+  
+  const timestamps = sales
+    .map(sale => sale.published)
+    .filter(ts => ts)
+    .map(ts => parseInt(ts));
+  
+  if (timestamps.length < 2) {
+    return '0 days';
+  }
+  
+  const oldestTimestamp = Math.min(...timestamps);
+  const newestTimestamp = Math.max(...timestamps);
+  const diffSeconds = newestTimestamp - oldestTimestamp;
+  const diffDays = Math.ceil(diffSeconds / 86400);
+  
+  return `${diffDays} day${diffDays !== 1 ? 's' : ''}`;
+}
