@@ -33,6 +33,7 @@ const selectPage = document.querySelector('#page-select');
 const selectLegoSetIds = document.querySelector('#lego-set-id-select');
 const selectSort = document.querySelector('#sort-select');
 const sectionDeals= document.querySelector('#deals');
+const sectionSales = document.querySelector('#sales');
 const spanNbDeals = document.querySelector('#nbDeals');
 const spanNbSales = document.querySelector('#nbSales');
 const spanP5SalesPrice = document.querySelector('#p5SalesPrice');
@@ -169,6 +170,36 @@ const renderDeals = deals => {
 };
 
 /**
+ * Render list of sold items
+ * @param  {Array} sales
+ */
+const renderSoldItems = sales => {
+  if (!sales || sales.length === 0) {
+    sectionSales.innerHTML = '';
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+  const div = document.createElement('div');
+  const template = sales
+    .map(sale => {
+      return `
+      <div class="sale" id=${sale.uuid}>
+        <span>${sale.title}</span>
+        <a href="${sale.link}" target="_blank" rel="noopener noreferrer">View on Vinted</a>
+        <span>${sale.price.amount} ${sale.price.currency_code}</span>
+      </div>
+    `;
+    })
+    .join('');
+
+  div.innerHTML = template;
+  fragment.appendChild(div);
+  sectionSales.innerHTML = '<h2>Sold Items</h2>';
+  sectionSales.appendChild(fragment);
+};
+
+/**
  * Render page selector
  * @param  {Object} pagination
  */
@@ -210,11 +241,12 @@ const renderIndicators = pagination => {
  * Render sales for a lego set
  * @param  {Object} sales
  */
-const renderSales = sales => {
+const renderSalesStats = sales => {
   const {result} = sales;
   const nbSales = result ? result.length : 0;
 
   spanNbSales.innerHTML = nbSales;
+  renderSoldItems(result);
 
   if (nbSales > 0) {
     const prices = result.map(sale => getPriceFromSale(sale)).filter(price => price > 0);
@@ -328,6 +360,6 @@ selectLegoSetIds.addEventListener('change', async (event) => {
   const id = event.target.value;
   if (id) {
     const sales = await fetchSales(id);
-    renderSales(sales);
+    renderSalesStats(sales);
   }
 });
