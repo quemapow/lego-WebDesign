@@ -471,6 +471,17 @@ const renderSalesStats = sales => {
   }
 };
 
+/**
+ * Render sales for a lego set
+ * @param  {Object} sales
+ */
+const renderSales = sales => {
+  const {result} = sales;
+  const nbSales = result ? result.length : 0;
+
+  spanNbSales.innerHTML = nbSales;
+};
+
 const render = (deals, pagination) => {
   console.log('Render called with deals:', deals.length, deals[0]);
   
@@ -683,4 +694,15 @@ filterSpans[2].addEventListener('click', () => {
 selectSort.addEventListener('change', (event) => {
   currentSort = event.target.value ? event.target.value : null;
   render(currentDeals, currentPagination);
+});
+
+/**
+ * Display sales for selected lego set id
+ */
+selectLegoSetIds.addEventListener('change', async (event) => {
+  const id = event.target.value;
+  if (id) {
+    const sales = await fetchSales(id);
+    renderSales(sales);
+  }
 });
