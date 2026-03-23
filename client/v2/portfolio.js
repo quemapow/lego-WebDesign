@@ -750,6 +750,14 @@ filterSpans[2].addEventListener('click', () => {
 });
 
 /**
+ * Filter by favorites
+ */
+filterSpans[3].addEventListener('click', () => {
+  showFavoritesOnly = !showFavoritesOnly;
+  render(currentDeals, currentPagination);
+});
+
+/**
  * Sort deals
  */
 selectSort.addEventListener('change', (event) => {
