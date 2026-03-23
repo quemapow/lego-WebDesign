@@ -766,11 +766,76 @@ btnApplyFilters?.addEventListener('click', () => {
  * Reset filters
  */
 btnResetFilters?.addEventListener('click', () => {
-  inputMinProfit.value = '';
-  inputMaxPrice.value = '';
+
   currentFilter = null;
   currentSort = null;
+  showFavoritesOnly = false;
   selectSort.value = 'profit-desc';
+  
+  // Deactivate all quick filters
+  btnFilterBestDiscount?.classList.remove('active');
+  btnFilterMostCommented?.classList.remove('active');
+  btnFilterHotDeals?.classList.remove('active');
+  btnFilterFavorites?.classList.remove('active');
+  
+  render(currentDeals, currentPagination);
+});
+
+/**
+ * Quick Filter - Best Discount (> 50%)
+ */
+btnFilterBestDiscount?.addEventListener('click', () => {
+  currentFilter = currentFilter === 'best-discount' ? null : 'best-discount';
+  btnFilterBestDiscount.classList.toggle('active');
+  
+  // Deactivate other quick filters (except favorites)
+  if (currentFilter === 'best-discount') {
+    btnFilterMostCommented?.classList.remove('active');
+    btnFilterHotDeals?.classList.remove('active');
+  }
+  
+  render(currentDeals, currentPagination);
+});
+
+/**
+ * Quick Filter - Most Commented (> 15 comments)
+ */
+btnFilterMostCommented?.addEventListener('click', () => {
+  currentFilter = currentFilter === 'most-commented' ? null : 'most-commented';
+  btnFilterMostCommented.classList.toggle('active');
+  
+  // Deactivate other quick filters (except favorites)
+  if (currentFilter === 'most-commented') {
+    btnFilterBestDiscount?.classList.remove('active');
+    btnFilterHotDeals?.classList.remove('active');
+  }
+  
+  render(currentDeals, currentPagination);
+});
+
+/**
+ * Quick Filter - Hot Deals (temperature > 100)
+ */
+btnFilterHotDeals?.addEventListener('click', () => {
+  currentFilter = currentFilter === 'hot-deals' ? null : 'hot-deals';
+  btnFilterHotDeals.classList.toggle('active');
+  
+  // Deactivate other quick filters (except favorites)
+  if (currentFilter === 'hot-deals') {
+    btnFilterBestDiscount?.classList.remove('active');
+    btnFilterMostCommented?.classList.remove('active');
+  }
+  
+  render(currentDeals, currentPagination);
+});
+
+/**
+ * Quick Filter - My Favorites
+ */
+btnFilterFavorites?.addEventListener('click', () => {
+  showFavoritesOnly = !showFavoritesOnly;
+  btnFilterFavorites.classList.toggle('active');
+  
   render(currentDeals, currentPagination);
 });
 
@@ -812,7 +877,8 @@ selectLegoSetIds.addEventListener('change', async (event) => {
  */
 document.addEventListener('DOMContentLoaded', async () => {
   const deals = await fetchDeals();
-
+  const enrichedDeals = await enrichDealsWithVintedAverages(deals.result);
+  deals.result = enrichedDeals;
   setCurrentDeals(deals);
   render(currentDeals, currentPagination);
   updateSavedCount();
