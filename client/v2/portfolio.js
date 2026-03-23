@@ -145,7 +145,7 @@ const render = (deals, pagination) => {
  * Select the number of deals to display
  */
 selectShow.addEventListener('change', async (event) => {
-  const deals = await fetchDeals(currentPagination.currentPage, parseInt(event.target.value));
+  const deals = await fetchDeals(1, parseInt(event.target.value));
 
   setCurrentDeals(deals);
   render(currentDeals, currentPagination);
