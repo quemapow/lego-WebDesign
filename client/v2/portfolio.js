@@ -668,3 +668,11 @@ filterSpans[1].addEventListener('click', () => {
   currentFilter = currentFilter === 'most-commented' ? null : 'most-commented';
   render(currentDeals, currentPagination);
 });
+
+/**
+ * Filter by hot deals
+ */
+filterSpans[2].addEventListener('click', () => {
+  currentFilter = currentFilter === 'hot-deals' ? null : 'hot-deals';
+  render(currentDeals, currentPagination);
+});
