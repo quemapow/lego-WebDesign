@@ -676,3 +676,11 @@ filterSpans[2].addEventListener('click', () => {
   currentFilter = currentFilter === 'hot-deals' ? null : 'hot-deals';
   render(currentDeals, currentPagination);
 });
+
+/**
+ * Sort deals
+ */
+selectSort.addEventListener('change', (event) => {
+  currentSort = event.target.value ? event.target.value : null;
+  render(currentDeals, currentPagination);
+});
