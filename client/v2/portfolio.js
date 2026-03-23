@@ -652,3 +652,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   updateSavedCount();
   selectSort.value = 'profit-desc';
 });
+
+/**
+ * Filter by best discount
+ */
+filterSpans[0].addEventListener('click', () => {
+  currentFilter = currentFilter === 'best-discount' ? null : 'best-discount';
+  render(currentDeals, currentPagination);
+});
