@@ -35,5 +35,5 @@ async function scrapeVinted (lego) {
 
 const [,, param] = process.argv;
 
-scrapeADLB(param);
-//scrapeVinted(param)
+//scrapeADLB(param);
+scrapeVinted(param)
