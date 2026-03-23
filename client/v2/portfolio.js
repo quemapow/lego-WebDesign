@@ -43,7 +43,19 @@ const spanP25SalesPrice = document.querySelector('#p25SalesPrice');
 const spanP50SalesPrice = document.querySelector('#p50SalesPrice');
 const spanAverageSalesPrice = document.querySelector('#averageSalesPrice');
 const spanLifetimeValue = document.querySelector('#lifetimeValue');
-const filterSpans = document.querySelectorAll('#filters span');
+const spanTotalSets = document.querySelector('#totalSets');
+const spanProfitableSets = document.querySelector('#profitableSets');
+const spanAvgProfit = document.querySelector('#avgProfit');
+const spanSavedItems = document.querySelector('#savedItems');
+const spanResultsCount = document.querySelector('#resultsCount');
+
+const selectCategory = document.querySelector('#category-select');
+const inputMinProfit = document.querySelector('#min-profit');
+const inputMaxPrice = document.querySelector('#max-price');
+const btnApplyFilters = document.querySelector('.btn-apply-filters');
+const btnResetFilters = document.querySelector('.btn-reset-filters');
+const searchInput = document.querySelector('#search-input');
+const searchBtn = document.querySelector('.search-btn');
 
 /**
  * Set global value
@@ -137,6 +149,9 @@ const sortDeals = (deals, sortType) => {
   if (sortType === 'price-desc') {
     return sorted.sort((a, b) => b.price - a.price);
   }
+  if (sortType === 'profit-desc') {
+    return sorted.sort((a, b) => (calculateProfit(b) || 0) - (calculateProfit(a) || 0));
+  }
   if (sortType === 'date-asc') {
     return sorted.sort((a, b) => new Date(b.published) - new Date(a.published));
   }
@@ -147,72 +162,131 @@ const sortDeals = (deals, sortType) => {
 };
 
 /**
+ * Calculate profit between two prices
+ * @param {Object} deal - deal object
+ * @return {Number} profit amount
+ */
+const calculateProfit = (deal) => {
+  if (!deal || !deal.price) return 0;
+  const dealabsPrice = parseFloat(deal.price) || 0;
+  const vintedPrice = parseFloat(deal.vinted_price) || 0;
+  return vintedPrice > 0 ? vintedPrice - dealabsPrice : 0;
+};
+
+/**
+ * Calculate profit percentage
+ * @param {Object} deal - deal object
+ * @return {Number} profit percentage
+ */
+const calculateProfitPercent = (deal) => {
+  const profit = calculateProfit(deal);
+  const cost = parseFloat(deal.price) || 0;
+  return cost > 0 ? Math.round((profit / cost) * 100) : 0;
+};
+
+/**
  * Render list of deals
  * @param  {Array} deals
  */
 const renderDeals = deals => {
-  const fragment = document.createDocumentFragment();
-  const div = document.createElement('div');
+  const container = document.createElement('div');
+  container.className = 'deals-container';
+  
   const template = deals
     .map(deal => {
       const isFav = isFavorite(deal.uuid, favorites);
-      const favIcon = isFav ? '★' : '☆';
+      const dealabsPrice = parseFloat(deal.price) || 0;
+      const vintedPrice = parseFloat(deal.vinted_price) || 150;
+      const profit = vintedPrice - dealabsPrice;
+      const profitPercent = dealabsPrice > 0 ? Math.round((profit / dealabsPrice) * 100) : 0;
+      
       return `
-      <div class="deal" id=${deal.uuid}>
-        <span>${deal.id}</span>
-        <a href="${deal.link}" target="_blank" rel="noopener noreferrer">${deal.title}</a>
-        <span>${deal.price}</span>
-        <button class="favorite-btn" data-uuid="${deal.uuid}" title="Add to favorites">${favIcon}</button>
-      </div>
-    `;
+        <div class="deal-card" id="${deal.uuid}">
+          <div class="deal-header">
+            <div class="deal-image">🧱</div>
+            <div class="deal-title-section">
+              <div class="deal-ref">Ref. ${deal.id}</div>
+              <div class="deal-title">${deal.title}</div>
+              <div class="deal-links">
+                <a href="${deal.link}" target="_blank" rel="noopener noreferrer" class="deal-link">View on Dealabs</a>
+                ${deal.vinted_link ? `<a href="${deal.vinted_link}" target="_blank" rel="noopener noreferrer" class="deal-link">View on Vinted</a>` : ''}
+              </div>
+            </div>
+          </div>
+          <div class="deal-content">
+            <div class="price-row">
+              <div class="price-badge badge-dealabs">
+                <div class="price-label">DEALABS</div>
+                <div class="price-value">€${dealabsPrice.toFixed(2)}</div>
+              </div>
+              <div class="price-badge badge-vinted">
+                <div class="price-label">VINTED</div>
+                <div class="price-value">€${vintedPrice.toFixed(2)}</div>
+              </div>
+            </div>
+            <div class="profit-row">
+              <div class="profit-label">PROFIT</div>
+              <div>
+                <span class="profit-value">💰 €${profit.toFixed(2)}</span>
+                <span class="profit-percent">+${profitPercent}%</span>
+              </div>
+            </div>
+          </div>
+          <div class="deal-footer">
+            <button class="btn-save ${isFav ? 'saved' : ''}" data-uuid="${deal.uuid}" title="Add to favorites">
+              ${isFav ? '❤️ Saved' : '🤍 Save'}
+            </button>
+            <button class="btn-details" data-uuid="${deal.uuid}" title="View details">Details</button>
+          </div>
+        </div>
+      `;
     })
     .join('');
 
-  div.innerHTML = template;
-  fragment.appendChild(div);
-  sectionDeals.innerHTML = '<h2>Deals</h2>';
-  sectionDeals.appendChild(fragment);
+  container.innerHTML = template;
+  sectionDeals.innerHTML = '';
+  sectionDeals.appendChild(container);
 
-  // Add event listeners to favorite buttons
-  const favoriteBtns = sectionDeals.querySelectorAll('.favorite-btn');
-  favoriteBtns.forEach(btn => {
+  // Update results count
+  spanResultsCount.textContent = deals.length;
+
+  // Add event listeners to save buttons
+  const saveBtns = sectionDeals.querySelectorAll('.btn-save');
+  saveBtns.forEach(btn => {
     btn.addEventListener('click', (event) => {
-      const dealId = event.target.dataset.uuid;
+      event.preventDefault();
+      const dealId = event.currentTarget.dataset.uuid;
       favorites = toggleFavorite(dealId, favorites);
       localStorage.setItem('favorites', JSON.stringify(favorites));
-      event.target.textContent = isFavorite(dealId, favorites) ? '★' : '☆';
+      const isFav = isFavorite(dealId, favorites);
+      event.currentTarget.classList.toggle('saved');
+      event.currentTarget.textContent = isFav ? '❤️ Saved' : '🤍 Save';
+      updateSavedCount();
+    });
+  });
+
+  // Add event listeners to details buttons
+  const detailsBtns = sectionDeals.querySelectorAll('.btn-details');
+  detailsBtns.forEach(btn => {
+    btn.addEventListener('click', (event) => {
+      const dealId = event.currentTarget.dataset.uuid;
+      const deal = deals.find(d => d.uuid === dealId);
+      if (deal) {
+        alert(`${deal.title}\n\nPrice: €${dealId.price}\n\nLink: ${deal.link}`);
+      }
     });
   });
 };
 
 /**
- * Render list of sold items
- * @param  {Array} sales
+ * Update saved items count
  */
-const renderSoldItems = sales => {
-  if (!sales || sales.length === 0) {
-    sectionSales.innerHTML = '';
-    return;
+const updateSavedCount = () => {
+  spanSavedItems.textContent = favorites.length;
+  const btnExport = document.querySelector('.btn-export');
+  if (btnExport) {
+    btnExport.textContent = `📥 Export Saved (${favorites.length})`;
   }
-
-  const fragment = document.createDocumentFragment();
-  const div = document.createElement('div');
-  const template = sales
-    .map(sale => {
-      return `
-      <div class="sale" id=${sale.uuid}>
-        <span>${sale.title}</span>
-        <a href="${sale.link}" target="_blank" rel="noopener noreferrer">View on Vinted</a>
-        <span>${sale.price.amount} ${sale.price.currency_code}</span>
-      </div>
-    `;
-    })
-    .join('');
-
-  div.innerHTML = template;
-  fragment.appendChild(div);
-  sectionSales.innerHTML = '<h2>Sold Items</h2>';
-  sectionSales.appendChild(fragment);
 };
 
 /**
@@ -249,8 +323,35 @@ const renderLegoSetIds = deals => {
  */
 const renderIndicators = pagination => {
   const {count} = pagination;
+  if (spanNbDeals) {
+    spanNbDeals.innerHTML = count;
+  }
+  if (spanTotalSets) {
+    spanTotalSets.textContent = count;
+  }
+};
 
-  spanNbDeals.innerHTML = count;
+/**
+ * Update statistics
+ */
+const updateStatistics = deals => {
+  if (!deals || deals.length === 0) {
+    if (spanTotalSets) spanTotalSets.textContent = '0';
+    if (spanProfitableSets) spanProfitableSets.textContent = '0';
+    if (spanAvgProfit) spanAvgProfit.textContent = '€0';
+    return;
+  }
+
+  const totalSets = deals.length;
+  const profitableDeals = deals.filter(deal => calculateProfit(deal) > 0);
+  const profitableSets = profitableDeals.length;
+  const avgProfit = profitableDeals.length > 0 
+    ? profitableDeals.reduce((sum, deal) => sum + calculateProfit(deal), 0) / profitableSets
+    : 0;
+
+  if (spanTotalSets) spanTotalSets.textContent = totalSets;
+  if (spanProfitableSets) spanProfitableSets.textContent = profitableSets;
+  if (spanAvgProfit) spanAvgProfit.textContent = `€${avgProfit.toFixed(2)}`;
 };
 
 /**
@@ -262,7 +363,6 @@ const renderSalesStats = sales => {
   const nbSales = result ? result.length : 0;
 
   spanNbSales.innerHTML = nbSales;
-  renderSoldItems(result);
 
   if (nbSales > 0) {
     const prices = result.map(sale => getPriceFromSale(sale)).filter(price => price > 0);
@@ -302,7 +402,8 @@ const render = (deals, pagination) => {
   renderDeals(sortedDeals);
   renderPagination(pagination);
   renderIndicators(pagination);
-  renderLegoSetIds(deals)
+  renderLegoSetIds(deals);
+  updateStatistics(sortedDeals);
 };
 
 /**
@@ -331,51 +432,64 @@ selectPage.addEventListener('change', async (event) => {
   render(currentDeals, currentPagination);
 });
 
-document.addEventListener('DOMContentLoaded', async () => {
-  const deals = await fetchDeals();
-
-  setCurrentDeals(deals);
-  render(currentDeals, currentPagination);
-});
-
-/**
- * Filter by best discount
- */
-filterSpans[0].addEventListener('click', () => {
-  currentFilter = currentFilter === 'best-discount' ? null : 'best-discount';
-  render(currentDeals, currentPagination);
-});
-
-/**
- * Filter by most commented
- */
-filterSpans[1].addEventListener('click', () => {
-  currentFilter = currentFilter === 'most-commented' ? null : 'most-commented';
-  render(currentDeals, currentPagination);
-});
-
-/**
- * Filter by hot deals
- */
-filterSpans[2].addEventListener('click', () => {
-  currentFilter = currentFilter === 'hot-deals' ? null : 'hot-deals';
-  render(currentDeals, currentPagination);
-});
-
-/**
- * Filter by favorites
- */
-filterSpans[3].addEventListener('click', () => {
-  showFavoritesOnly = !showFavoritesOnly;
-  render(currentDeals, currentPagination);
-});
-
 /**
  * Sort deals
  */
 selectSort.addEventListener('change', (event) => {
   currentSort = event.target.value ? event.target.value : null;
   render(currentDeals, currentPagination);
+});
+
+/**
+ * Apply filters
+ */
+btnApplyFilters?.addEventListener('click', () => {
+  const minProfit = parseFloat(inputMinProfit.value) || 0;
+  const maxPrice = parseFloat(inputMaxPrice.value) || Infinity;
+  
+  const filtered = currentDeals.filter(deal => {
+    const profit = calculateProfit(deal);
+    const dealabsPrice = parseFloat(deal.price) || 0;
+    return profit >= minProfit && dealabsPrice <= maxPrice;
+  });
+  
+  const sortedDeals = currentSort ? sortDeals(filtered, currentSort) : filtered;
+  renderDeals(sortedDeals);
+  updateStatistics(sortedDeals);
+});
+
+/**
+ * Reset filters
+ */
+btnResetFilters?.addEventListener('click', () => {
+  inputMinProfit.value = '';
+  inputMaxPrice.value = '';
+  currentFilter = null;
+  currentSort = null;
+  selectSort.value = 'profit-desc';
+  render(currentDeals, currentPagination);
+});
+
+/**
+ * Search functionality
+ */
+searchBtn?.addEventListener('click', () => {
+  const searchTerm = searchInput.value.toLowerCase();
+  if (searchTerm) {
+    const filtered = currentDeals.filter(deal => 
+      deal.title.toLowerCase().includes(searchTerm) || 
+      deal.id.toString().includes(searchTerm)
+    );
+    const sortedDeals = currentSort ? sortDeals(filtered, currentSort) : filtered;
+    renderDeals(sortedDeals);
+    updateStatistics(sortedDeals);
+  }
+});
+
+searchInput?.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    searchBtn.click();
+  }
 });
 
 /**
@@ -387,4 +501,16 @@ selectLegoSetIds.addEventListener('change', async (event) => {
     const sales = await fetchSales(id);
     renderSalesStats(sales);
   }
+});
+
+/**
+ * Initialize on page load
+ */
+document.addEventListener('DOMContentLoaded', async () => {
+  const deals = await fetchDeals();
+
+  setCurrentDeals(deals);
+  render(currentDeals, currentPagination);
+  updateSavedCount();
+  selectSort.value = 'profit-desc';
 });

@@ -2,11 +2,103 @@
 <html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>🧱 Lego | Predictability of a lego set deal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧱 LEGO Price Analyzer - Dealabs x Vinted</title>
+    <link rel="stylesheet" href="style.css">
   </head>
   <body>
-    <h1>Lego</h1>
-    <section id="options">
+    <!-- HEADER -->
+    <header class="header">
+      <div class="header-container">
+        <div class="logo">
+          <span class="logo-icon">🧱</span>
+          <span class="logo-text">LEGO Price Analyzer</span>
+          <span class="logo-subtitle">Dealabs – Vinted</span>
+        </div>
+        <div class="auth-buttons">
+          <button class="btn-login">Login</button>
+          <button class="btn-signup">Sign Up</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- SEARCH SECTION -->
+    <section class="search-section">
+      <div class="search-container">
+        <input type="text" id="search-input" class="search-input" placeholder="Search LEGO sets by name or reference..." />
+        <button class="search-btn">🔍</button>
+      </div>
+    </section>
+
+    <!-- FILTERS SECTION -->
+    <section class="filters-section">
+      <div class="filters-container">
+        <div class="filter-group">
+          <label>Category</label>
+          <select id="category-select" class="filter-select">
+            <option value="">All Categories</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Sort By</label>
+          <select id="sort-select" class="filter-select">
+            <option value="profit-desc">Highest Profit</option>
+            <option value="price-asc">Cheaper</option>
+            <option value="price-desc">Expensive</option>
+            <option value="date-asc">Recently published</option>
+            <option value="date-desc">Anciently published</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Min Profit (€)</label>
+          <input type="number" id="min-profit" class="filter-input" placeholder="e.g. 50" />
+        </div>
+        <div class="filter-group">
+          <label>Max Price (€)</label>
+          <input type="number" id="max-price" class="filter-input" placeholder="e.g. 500" />
+        </div>
+        <button class="btn-apply-filters">Apply Filters</button>
+        <button class="btn-reset-filters">Reset</button>
+      </div>
+    </section>
+
+    <!-- STATISTICS CARDS -->
+    <section class="stats-section">
+      <div class="stats-container">
+        <div class="stat-card stat-card-blue">
+          <div class="stat-title">Total Sets</div>
+          <div class="stat-value" id="totalSets">24</div>
+        </div>
+        <div class="stat-card stat-card-green">
+          <div class="stat-title">Profitable Sets</div>
+          <div class="stat-value" id="profitableSets">18</div>
+        </div>
+        <div class="stat-card stat-card-purple">
+          <div class="stat-title">Avg. Profit</div>
+          <div class="stat-value" id="avgProfit">€124</div>
+        </div>
+        <div class="stat-card stat-card-pink">
+          <div class="stat-title">Saved Items</div>
+          <div class="stat-value" id="savedItems">0</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RESULTS HEADER -->
+    <section class="results-header">
+      <h2>Results (<span id="resultsCount">6</span>)</h2>
+      <button class="btn-export">📥 Export Saved (0)</button>
+    </section>
+
+    <!-- RESULTS SECTION -->
+    <section id="deals" class="deals-section"></section>
+
+    <!-- PAGINATION -->
+    <section class="pagination-section">
+      <div id="page">
+        <label for="page-select">Go to page:</label>
+        <select name="page" id="page-select"></select>
+      </div>
       <div id="show">
         <label for="show-select">Show:</label>
         <select name="show" id="show-select">
@@ -15,34 +107,17 @@
           <option value="24">24</option>
         </select>
       </div>
-      <div id="page">
-        <label for="page-select">Go to page:</label>
-        <select name="page" id="page-select"> </select>
-      </div>
-      <div id="filters">
-        <span>By best discount</span>
-        <span>By most commented</span>
-        <span>By hot deals</span>
-        <span>By favorites</span>
-      </div>
-      <div id="sort">
-        <label for="sort-select">Sort:</label>
-        <select name="sort" id="sort-select">
-          <option value="price-asc">Cheaper</option>
-          <option value="price-desc">Expensive</option>
-          <option value="date-asc">Recently published</option>
-          <option value="date-desc">Anciently published</option>
-        </select>
-      </div>
     </section>
-    <section id="lego">
+
+    <!-- HIDDEN SECTIONS (kept for compatibility) -->
+    <section id="lego" style="display:none;">
       <h2>Lego sets</h2>
       <div>
         <label>Lego set id:</label>
         <select id="lego-set-id-select"></select> 
       </div>
     </section>
-    <section id="indicators">
+    <section id="indicators" style="display:none;">
       <h2>Indicators</h2>
       <div>
         <span>Number of deals</span>
@@ -73,8 +148,8 @@
         <span id="lifetimeValue">0 days</span>
       </div>
     </section>
-    <section id="deals"></section>
-    <section id="sales"></section>
+    <section id="sales" style="display:none;"></section>
+
     <script type="text/javascript" charset="UTF-8" src="utils.js"></script>
     <script type="text/javascript" charset="UTF-8" src="portfolio.js"></script>
   </body>
