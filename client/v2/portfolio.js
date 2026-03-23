@@ -34,6 +34,7 @@ const selectLegoSetIds = document.querySelector('#lego-set-id-select');
 const selectSort = document.querySelector('#sort-select');
 const sectionDeals= document.querySelector('#deals');
 const spanNbDeals = document.querySelector('#nbDeals');
+const spanNbSales = document.querySelector('#nbSales');
 const filterSpans = document.querySelectorAll('#filters span');
 
 /**
@@ -68,6 +69,30 @@ const fetchDeals = async (page = 1, size = 6) => {
   } catch (error) {
     console.error(error);
     return {currentDeals, currentPagination};
+  }
+};
+
+/**
+ * Fetch sales from api
+ * @param  {Number} id - lego set id
+ * @return {Object}
+ */
+const fetchSales = async (id) => {
+  try {
+    const response = await fetch(
+      `https://lego-api-blue.vercel.app/sales?id=${id}`
+    );
+    const body = await response.json();
+
+    if (body.success !== true) {
+      console.error(body);
+      return {nbSales: 0};
+    }
+
+    return body.data;
+  } catch (error) {
+    console.error(error);
+    return {nbSales: 0};
   }
 };
 
@@ -176,6 +201,17 @@ const renderIndicators = pagination => {
   spanNbDeals.innerHTML = count;
 };
 
+/**
+ * Render sales for a lego set
+ * @param  {Object} sales
+ */
+const renderSales = sales => {
+  const {result} = sales;
+  const nbSales = result ? result.length : 0;
+
+  spanNbSales.innerHTML = nbSales;
+};
+
 const render = (deals, pagination) => {
   const filteredDeals = currentFilter ? filterDeals(deals, currentFilter) : deals;
   const sortedDeals = currentSort ? sortDeals(filteredDeals, currentSort) : filteredDeals;
@@ -248,4 +284,15 @@ filterSpans[2].addEventListener('click', () => {
 selectSort.addEventListener('change', (event) => {
   currentSort = event.target.value ? event.target.value : null;
   render(currentDeals, currentPagination);
+});
+
+/**
+ * Display sales for selected lego set id
+ */
+selectLegoSetIds.addEventListener('change', async (event) => {
+  const id = event.target.value;
+  if (id) {
+    const sales = await fetchSales(id);
+    renderSales(sales);
+  }
 });
