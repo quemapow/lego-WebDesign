@@ -82,6 +82,9 @@ const filterDeals = (deals, filterType) => {
   if (filterType === 'most-commented') {
     return deals.filter(deal => deal.comments && deal.comments > 15);
   }
+  if (filterType === 'hot-deals') {
+    return deals.filter(deal => deal.temperature && deal.temperature > 100);
+  }
   return deals;
 };
 
@@ -202,5 +205,13 @@ filterSpans[0].addEventListener('click', () => {
  */
 filterSpans[1].addEventListener('click', () => {
   currentFilter = currentFilter === 'most-commented' ? null : 'most-commented';
+  render(currentDeals, currentPagination);
+});
+
+/**
+ * Filter by hot deals
+ */
+filterSpans[2].addEventListener('click', () => {
+  currentFilter = currentFilter === 'hot-deals' ? null : 'hot-deals';
   render(currentDeals, currentPagination);
 });
