@@ -270,10 +270,8 @@ const renderDeals = deals => {
   detailsBtns.forEach(btn => {
     btn.addEventListener('click', (event) => {
       const dealId = event.currentTarget.dataset.uuid;
-      const deal = deals.find(d => d.uuid === dealId);
-      if (deal) {
-        alert(`${deal.title}\n\nPrice: €${dealId.price}\n\nLink: ${deal.link}`);
-      }
+      // Navigate to details page with uuid as parameter
+      window.location.href = `details.html?id=${dealId}`;
     });
   });
 };

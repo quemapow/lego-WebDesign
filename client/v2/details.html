@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧱 LEGO Price Analyzer - Deal Details</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <!-- HEADER -->
+    <header class="header">
+      <div class="header-container">
+        <div class="logo">
+          <span class="logo-icon">🧱</span>
+          <span class="logo-text">LEGO Price Analyzer</span>
+          <span class="logo-subtitle">Dealabs – Vinted</span>
+        </div>
+        <div class="auth-buttons">
+          <button class="btn-login">Login</button>
+          <button class="btn-signup">Sign Up</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- BACK BUTTON -->
+    <section class="back-section">
+      <a href="index.html" class="btn-back">← Back to deals</a>
+    </section>
+
+    <!-- DEAL DETAIL SECTION -->
+    <section class="detail-section">
+      <div class="detail-container">
+        <!-- PRODUCT INFO -->
+        <div class="product-info">
+          <div class="product-header">
+            <div class="product-image">🧱</div>
+            <div class="product-details">
+              <div class="product-ref" id="productRef">Ref. -</div>
+              <h1 id="productTitle">Loading...</h1>
+              <div class="product-actions">
+                <button id="btnOpenDealabs" class="btn-action btn-dealabs">🔗 View on Dealabs</button>
+                <button id="btnOpenVinted" class="btn-action btn-vinted">🔗 View on Vinted</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- PRICE COMPARISON -->
+          <div class="price-comparison">
+            <h2>Price Comparison</h2>
+            <div class="price-cards">
+              <div class="price-card price-dealabs">
+                <div class="price-label">DEALABS PRICE</div>
+                <div class="price-amount" id="dealabsPrice">€0.00</div>
+              </div>
+              <div class="price-card price-vinted">
+                <div class="price-label">VINTED AVERAGE</div>
+                <div class="price-amount" id="vintedAvgPrice">€0.00</div>
+              </div>
+              <div class="price-card price-profit">
+                <div class="price-label">PROFIT POTENTIAL</div>
+                <div class="price-amount" id="profitAmount">€0.00</div>
+                <div class="price-hint" id="profitPercent">+0%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VINTED SALES INDICATORS -->
+        <div class="indicators-section">
+          <h2>Vinted Market Analysis</h2>
+          
+          <!-- SALES COUNT -->
+          <div class="indicator-card">
+            <div class="indicator-header">
+              <h3>Total Sales</h3>
+              <p class="indicator-description">Number of items sold on Vinted</p>
+            </div>
+            <div class="indicator-value" id="totalSales">0</div>
+          </div>
+
+          <!-- PRICE INDICATORS -->
+          <div class="price-indicators">
+            <div class="indicator-card">
+              <div class="indicator-header">
+                <h3>Average Price</h3>
+                <p class="indicator-description">Mean price across all sales</p>
+              </div>
+              <div class="indicator-value" id="avgPrice">€0.00</div>
+            </div>
+
+            <div class="indicator-card">
+              <div class="indicator-header">
+                <h3>P5 Price</h3>
+                <p class="indicator-description">5th percentile price</p>
+              </div>
+              <div class="indicator-value" id="p5Price">€0.00</div>
+            </div>
+
+            <div class="indicator-card">
+              <div class="indicator-header">
+                <h3>P25 Price</h3>
+                <p class="indicator-description">25th percentile price</p>
+              </div>
+              <div class="indicator-value" id="p25Price">€0.00</div>
+            </div>
+
+            <div class="indicator-card">
+              <div class="indicator-header">
+                <h3>P50 Price</h3>
+                <p class="indicator-description">Median price (50th percentile)</p>
+              </div>
+              <div class="indicator-value" id="p50Price">€0.00</div>
+            </div>
+          </div>
+
+          <!-- LIFETIME -->
+          <div class="indicator-card">
+            <div class="indicator-header">
+              <h3>Lifetime Value</h3>
+              <p class="indicator-description">How long the set exists on Vinted</p>
+            </div>
+            <div class="indicator-value" id="lifetime">0 days</div>
+          </div>
+        </div>
+
+        <!-- SOLD ITEMS -->
+        <div class="sold-items-section">
+          <h2>Recent Sales on Vinted</h2>
+          <div id="soldItemsList" class="sold-items-container">
+            <p class="loading">Loading sales data...</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <script type="text/javascript" charset="UTF-8" src="utils.js"></script>
+    <script type="text/javascript" charset="UTF-8" src="details.js"></script>
+  </body>
+</html>
