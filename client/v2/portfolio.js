@@ -24,6 +24,7 @@ This endpoint accepts the following optional query string parameters:
 // current deals on the page
 let currentDeals = [];
 let currentPagination = {};
+let currentFilter = null;
 
 // instantiate the selectors
 const selectShow = document.querySelector('#show-select');
@@ -31,6 +32,7 @@ const selectPage = document.querySelector('#page-select');
 const selectLegoSetIds = document.querySelector('#lego-set-id-select');
 const sectionDeals= document.querySelector('#deals');
 const spanNbDeals = document.querySelector('#nbDeals');
+const filterSpans = document.querySelectorAll('#filters span');
 
 /**
  * Set global value
@@ -65,6 +67,19 @@ const fetchDeals = async (page = 1, size = 6) => {
     console.error(error);
     return {currentDeals, currentPagination};
   }
+};
+
+/**
+ * Filter deals by discount
+ * @param  {Array} deals
+ * @param  {String} filterType - type of filter to apply
+ * @return {Array}
+ */
+const filterDeals = (deals, filterType) => {
+  if (filterType === 'best-discount') {
+    return deals.filter(deal => deal.discount && deal.discount > 50);
+  }
+  return deals;
 };
 
 /**
@@ -131,7 +146,8 @@ const renderIndicators = pagination => {
 };
 
 const render = (deals, pagination) => {
-  renderDeals(deals);
+  const filteredDeals = currentFilter ? filterDeals(deals, currentFilter) : deals;
+  renderDeals(filteredDeals);
   renderPagination(pagination);
   renderIndicators(pagination);
   renderLegoSetIds(deals)
@@ -167,5 +183,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   const deals = await fetchDeals();
 
   setCurrentDeals(deals);
+  render(currentDeals, currentPagination);
+});
+
+/**
+ * Filter by best discount
+ */
+filterSpans[0].addEventListener('click', () => {
+  currentFilter = currentFilter === 'best-discount' ? null : 'best-discount';
   render(currentDeals, currentPagination);
 });
