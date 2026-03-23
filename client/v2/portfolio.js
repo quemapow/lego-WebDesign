@@ -26,6 +26,7 @@ let currentDeals = [];
 let currentPagination = {};
 let currentFilter = null;
 let currentSort = null;
+let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
 
 // instantiate the selectors
 const selectShow = document.querySelector('#show-select');
@@ -153,11 +154,14 @@ const renderDeals = deals => {
   const div = document.createElement('div');
   const template = deals
     .map(deal => {
+      const isFav = isFavorite(deal.uuid, favorites);
+      const favIcon = isFav ? '★' : '☆';
       return `
       <div class="deal" id=${deal.uuid}>
         <span>${deal.id}</span>
         <a href="${deal.link}" target="_blank" rel="noopener noreferrer">${deal.title}</a>
         <span>${deal.price}</span>
+        <button class="favorite-btn" data-uuid="${deal.uuid}" title="Add to favorites">${favIcon}</button>
       </div>
     `;
     })
@@ -167,6 +171,17 @@ const renderDeals = deals => {
   fragment.appendChild(div);
   sectionDeals.innerHTML = '<h2>Deals</h2>';
   sectionDeals.appendChild(fragment);
+
+  // Add event listeners to favorite buttons
+  const favoriteBtns = sectionDeals.querySelectorAll('.favorite-btn');
+  favoriteBtns.forEach(btn => {
+    btn.addEventListener('click', (event) => {
+      const dealId = event.target.dataset.uuid;
+      favorites = toggleFavorite(dealId, favorites);
+      localStorage.setItem('favorites', JSON.stringify(favorites));
+      event.target.textContent = isFavorite(dealId, favorites) ? '★' : '☆';
+    });
+  });
 };
 
 /**

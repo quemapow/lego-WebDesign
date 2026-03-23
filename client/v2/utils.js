@@ -86,3 +86,29 @@ const calculateLifetime = (sales) => {
   
   return `${diffDays} day${diffDays !== 1 ? 's' : ''}`;
 }
+
+/**
+ * Toggle favorite status of a deal
+ * @param {String} dealId - uuid of the deal
+ * @param {Array} favorites - current list of favorites
+ * @returns {Array} updated list of favorites
+ */
+const toggleFavorite = (dealId, favorites) => {
+  const index = favorites.indexOf(dealId);
+  if (index > -1) {
+    favorites.splice(index, 1);
+  } else {
+    favorites.push(dealId);
+  }
+  return favorites;
+}
+
+/**
+ * Check if a deal is favorite
+ * @param {String} dealId - uuid of the deal
+ * @param {Array} favorites - current list of favorites
+ * @returns {Boolean}
+ */
+const isFavorite = (dealId, favorites) => {
+  return favorites.includes(dealId);
+}
