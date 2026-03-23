@@ -25,11 +25,13 @@ This endpoint accepts the following optional query string parameters:
 let currentDeals = [];
 let currentPagination = {};
 let currentFilter = null;
+let currentSort = null;
 
 // instantiate the selectors
 const selectShow = document.querySelector('#show-select');
 const selectPage = document.querySelector('#page-select');
 const selectLegoSetIds = document.querySelector('#lego-set-id-select');
+const selectSort = document.querySelector('#sort-select');
 const sectionDeals= document.querySelector('#deals');
 const spanNbDeals = document.querySelector('#nbDeals');
 const filterSpans = document.querySelectorAll('#filters span');
@@ -86,6 +88,29 @@ const filterDeals = (deals, filterType) => {
     return deals.filter(deal => deal.temperature && deal.temperature > 100);
   }
   return deals;
+};
+
+/**
+ * Sort deals
+ * @param  {Array} deals
+ * @param  {String} sortType - type of sort to apply
+ * @return {Array}
+ */
+const sortDeals = (deals, sortType) => {
+  const sorted = [...deals];
+  if (sortType === 'price-asc') {
+    return sorted.sort((a, b) => a.price - b.price);
+  }
+  if (sortType === 'price-desc') {
+    return sorted.sort((a, b) => b.price - a.price);
+  }
+  if (sortType === 'date-asc') {
+    return sorted.sort((a, b) => new Date(b.published) - new Date(a.published));
+  }
+  if (sortType === 'date-desc') {
+    return sorted.sort((a, b) => new Date(a.published) - new Date(b.published));
+  }
+  return sorted;
 };
 
 /**
@@ -153,7 +178,8 @@ const renderIndicators = pagination => {
 
 const render = (deals, pagination) => {
   const filteredDeals = currentFilter ? filterDeals(deals, currentFilter) : deals;
-  renderDeals(filteredDeals);
+  const sortedDeals = currentSort ? sortDeals(filteredDeals, currentSort) : filteredDeals;
+  renderDeals(sortedDeals);
   renderPagination(pagination);
   renderIndicators(pagination);
   renderLegoSetIds(deals)
@@ -213,5 +239,13 @@ filterSpans[1].addEventListener('click', () => {
  */
 filterSpans[2].addEventListener('click', () => {
   currentFilter = currentFilter === 'hot-deals' ? null : 'hot-deals';
+  render(currentDeals, currentPagination);
+});
+
+/**
+ * Sort deals
+ */
+selectSort.addEventListener('change', (event) => {
+  currentSort = event.target.value ? event.target.value : null;
   render(currentDeals, currentPagination);
 });
