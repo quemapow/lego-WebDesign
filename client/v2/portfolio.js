@@ -79,6 +79,9 @@ const filterDeals = (deals, filterType) => {
   if (filterType === 'best-discount') {
     return deals.filter(deal => deal.discount && deal.discount > 50);
   }
+  if (filterType === 'most-commented') {
+    return deals.filter(deal => deal.comments && deal.comments > 15);
+  }
   return deals;
 };
 
@@ -191,5 +194,13 @@ document.addEventListener('DOMContentLoaded', async () => {
  */
 filterSpans[0].addEventListener('click', () => {
   currentFilter = currentFilter === 'best-discount' ? null : 'best-discount';
+  render(currentDeals, currentPagination);
+});
+
+/**
+ * Filter by most commented
+ */
+filterSpans[1].addEventListener('click', () => {
+  currentFilter = currentFilter === 'most-commented' ? null : 'most-commented';
   render(currentDeals, currentPagination);
 });
