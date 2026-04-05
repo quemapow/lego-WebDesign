@@ -56,8 +56,9 @@ const fetchDeals = async () => {
 
 const fetchSales = async (legoSetId, dealTitle = '') => {
   try {
+    const strictIdParam = legoSetId ? '&strictId=1' : '';
     const response = await fetch(
-      `${API_BASE}/sales/search?legoSetId=${encodeURIComponent(legoSetId)}&keywords=${encodeURIComponent(dealTitle)}&limit=1000`
+      `${API_BASE}/sales/search?legoSetId=${encodeURIComponent(legoSetId)}&keywords=${encodeURIComponent(dealTitle)}&limit=1000&live=1${strictIdParam}`
     );
     const body = await response.json();
     return Array.isArray(body.results) ? body.results : [];
