@@ -151,6 +151,15 @@ app.get('/sales/search', (request, response) => {
 });
 
 
-app.listen(PORT)
+const server = app.listen(PORT, () => {
+  console.log(`📡 Running on port ${PORT}`);
+});
 
-console.log(`📡 Running on port ${PORT}`);
+server.on('error', (error) => {
+  if (error.code === 'EADDRINUSE') {
+    console.error(`Port ${PORT} is already in use. Stop the existing server before starting a new one.`);
+    process.exit(1);
+  }
+
+  throw error;
+});

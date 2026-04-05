@@ -1,102 +1,58 @@
-// Invoking strict mode
 'use strict';
 
-/**
- * Get URL query parameters
- */
+const API_BASE = 'http://localhost:8092';
+
 const getQueryParam = (param) => {
   const urlParams = new URLSearchParams(window.location.search);
   return urlParams.get(param);
 };
 
-/**
- * Fetch deal data from localStorage or API
- */
 const fetchDealData = async () => {
-  try {
-    // Try to get all deals from a reasonable size range to find our deal
-    const response = await fetch('https://lego-api-blue.vercel.app/deals?page=1&size=100');
-    const body = await response.json();
-
-    if (body.success !== true) {
-      console.error('Failed to fetch deals', body);
-      return null;
-    }
-
-    return body.data.result;
-  } catch (error) {
-    console.error('Error fetching deal data:', error);
-    return null;
-  }
+  const response = await fetch(`${API_BASE}/deals/search?limit=1000`);
+  const body = await response.json();
+  return Array.isArray(body.results) ? body.results : [];
 };
 
-/**
- * Fetch Vinted sales for a specific LEGO set ID
- */
 const fetchVintedSales = async (legoSetId) => {
-  try {
-    const response = await fetch(`https://lego-api-blue.vercel.app/sales?id=${legoSetId}`);
-    const body = await response.json();
-
-    if (body.success !== true) {
-      console.error('Failed to fetch sales', body);
-      return { result: [] };
-    }
-
-    return body.data;
-  } catch (error) {
-    console.error('Error fetching sales:', error);
-    return { result: [] };
-  }
+  const response = await fetch(`${API_BASE}/sales/search?legoSetId=${encodeURIComponent(legoSetId)}&limit=1000`);
+  const body = await response.json();
+  return Array.isArray(body.results) ? body.results : [];
 };
 
-/**
- * Render sold items from Vinted
- */
 const renderSoldItems = (sales) => {
   const container = document.getElementById('soldItemsList');
-  
+
+  if (!container) {
+    return;
+  }
+
   if (!sales || sales.length === 0) {
     container.innerHTML = '<p class="no-data">No sales data available</p>';
     return;
   }
 
-  const itemsHtml = sales
-    .slice(0, 10) // Show only first 10
-    .map(sale => {
-      const price = getPriceFromSale(sale);
-      return `
-        <div class="sold-item-card">
-          <div class="sold-item-header">
-            <div class="sold-item-title">${sale.title || 'Unknown item'}</div>
-            <div class="sold-item-price">€${price.toFixed(2)}</div>
-          </div>
-          <button 
-            class="btn-open-item" 
-            onclick="window.open('${sale.link}', '_blank')" 
-            title="View on Vinted">
-            🔗 View on Vinted
-          </button>
+  container.innerHTML = sales.slice(0, 10).map((sale) => {
+    const price = getPriceFromSale(sale);
+    return `
+      <div class="sold-item-card">
+        <div class="sold-item-header">
+          <div class="sold-item-title">${sale.title || 'Unknown item'}</div>
+          <div class="sold-item-price">€${price.toFixed(2)}</div>
         </div>
-      `;
-    })
-    .join('');
-
-  container.innerHTML = itemsHtml;
+        <button class="btn-open-item" onclick="window.open('${sale.link}', '_blank')" title="View on Vinted">
+          🔗 View on Vinted
+        </button>
+      </div>
+    `;
+  }).join('');
 };
 
-/**
- * Calculate average price from Vinted sales
- */
 const calculateVintedAverage = (sales) => {
-  if (!sales || !sales.result || sales.result.length === 0) {
+  if (!sales || sales.length === 0) {
     return 0;
   }
 
-  const prices = sales.result
-    .map(sale => getPriceFromSale(sale))
-    .filter(price => price > 0);
-
+  const prices = sales.map((sale) => getPriceFromSale(sale)).filter((price) => price > 0);
   if (prices.length === 0) {
     return 0;
   }
@@ -104,22 +60,17 @@ const calculateVintedAverage = (sales) => {
   return prices.reduce((sum, price) => sum + price, 0) / prices.length;
 };
 
-/**
- * Display deal details
- */
 const displayDealDetails = (deal, vintedAvgPrice = 0) => {
   if (!deal) {
     document.getElementById('productTitle').textContent = 'Deal not found';
     return;
   }
 
-  // Product Info
-  document.getElementById('productRef').textContent = `Ref. ${deal.id}`;
-  document.getElementById('productTitle').textContent = deal.title;
+  document.getElementById('productRef').textContent = `Ref. ${deal.id || '-'}`;
+  document.getElementById('productTitle').textContent = deal.title || 'Untitled deal';
 
-  // Price Info
   const dealabsPrice = parseFloat(deal.price) || 0;
-  const vintedPrice = vintedAvgPrice > 0 ? vintedAvgPrice : parseFloat(deal.vinted_price) || 150;
+  const vintedPrice = vintedAvgPrice > 0 ? vintedAvgPrice : 0;
   const profit = vintedPrice - dealabsPrice;
   const profitPercent = dealabsPrice > 0 ? Math.round((profit / dealabsPrice) * 100) : 0;
 
@@ -128,9 +79,7 @@ const displayDealDetails = (deal, vintedAvgPrice = 0) => {
   document.getElementById('profitAmount').textContent = `€${profit.toFixed(2)}`;
   document.getElementById('profitPercent').textContent = `+${profitPercent}%`;
 
-  // Action buttons
   const btnDealabs = document.getElementById('btnOpenDealabs');
-
   if (deal.link) {
     btnDealabs.onclick = () => window.open(deal.link, '_blank');
   } else {
@@ -138,13 +87,8 @@ const displayDealDetails = (deal, vintedAvgPrice = 0) => {
   }
 };
 
-/**
- * Display Vinted sales indicators
- */
 const displaySalesIndicators = (sales) => {
-  const result = sales.result || [];
-  
-  // Total sales count
+  const result = sales || [];
   document.getElementById('totalSales').textContent = result.length;
 
   if (result.length === 0) {
@@ -156,32 +100,18 @@ const displaySalesIndicators = (sales) => {
     return;
   }
 
-  // Extract prices
-  const prices = result
-    .map(sale => getPriceFromSale(sale))
-    .filter(price => price > 0);
-
+  const prices = result.map((sale) => getPriceFromSale(sale)).filter((price) => price > 0);
   if (prices.length > 0) {
-    // Calculate statistics
-    const avgPrice = prices.reduce((sum, p) => sum + p, 0) / prices.length;
-    const p5 = calculatePercentile(prices, 5);
-    const p25 = calculatePercentile(prices, 25);
-    const p50 = calculatePercentile(prices, 50);
-
+    const avgPrice = prices.reduce((sum, price) => sum + price, 0) / prices.length;
     document.getElementById('avgPrice').textContent = `€${avgPrice.toFixed(2)}`;
-    document.getElementById('p5Price').textContent = `€${p5.toFixed(2)}`;
-    document.getElementById('p25Price').textContent = `€${p25.toFixed(2)}`;
-    document.getElementById('p50Price').textContent = `€${p50.toFixed(2)}`;
+    document.getElementById('p5Price').textContent = `€${calculatePercentile(prices, 5).toFixed(2)}`;
+    document.getElementById('p25Price').textContent = `€${calculatePercentile(prices, 25).toFixed(2)}`;
+    document.getElementById('p50Price').textContent = `€${calculatePercentile(prices, 50).toFixed(2)}`;
   }
 
-  // Calculate lifetime
-  const lifetime = calculateLifetime(result);
-  document.getElementById('lifetime').textContent = lifetime;
+  document.getElementById('lifetime').textContent = calculateLifetime(result);
 };
 
-/**
- * Initialize page
- */
 document.addEventListener('DOMContentLoaded', async () => {
   const dealUuid = getQueryParam('id');
 
@@ -190,31 +120,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  // Fetch deals to find the one we're looking for
   const deals = await fetchDealData();
-  
-  if (!deals) {
-    document.getElementById('productTitle').textContent = 'Error loading deal data';
-    return;
-  }
-
-  const deal = deals.find(d => d.uuid === dealUuid);
+  const deal = deals.find((item) => item.uuid === dealUuid);
 
   if (!deal) {
     document.getElementById('productTitle').textContent = 'Deal not found';
     return;
   }
 
-  // Fetch Vinted sales for this deal
-  const sales = await fetchVintedSales(deal.id);
-  
-  // Calculate average Vinted price from sales
+  const sales = deal.id ? await fetchVintedSales(deal.id) : [];
   const vintedAvgPrice = calculateVintedAverage(sales);
 
-  // Display deal info with calculated Vinted average price
   displayDealDetails(deal, vintedAvgPrice);
-
-  // Display Vinted sales indicators
   displaySalesIndicators(sales);
-  renderSoldItems(sales.result);
+  renderSoldItems(sales);
 });
