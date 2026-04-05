@@ -129,11 +129,13 @@ const sortDeals = (deals, sortType) => {
 
 const filterDeals = (deals, filterType) => {
   if (filterType === 'best-discount') {
-    return deals.filter((deal) => (deal.discount || 0) > 50);
+    // Keep meaningful discounted deals for current data distribution.
+    return deals.filter((deal) => (deal.discount || 0) >= 20);
   }
 
   if (filterType === 'most-commented') {
-    return deals.filter((deal) => (deal.comments || 0) > 15);
+    // Keep deals with community traction.
+    return deals.filter((deal) => (deal.comments || 0) >= 1);
   }
 
   if (filterType === 'hot-deals') {
