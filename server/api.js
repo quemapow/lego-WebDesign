@@ -3,77 +3,154 @@ import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
 
-<<<<<<< HEAD
 // We load json files as data source
+import DEALS from "./sources/dealabs.json" with { type: "json" };
 import SALES from "./sources/vinted.json" with { type: "json" };
-=======
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'url';
-import path from 'path';
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
->>>>>>> fbb68ff (docs(api): create the workhop 4 about api with express)
 
 const PORT = 8092;
 
 const app = express();
 
-<<<<<<< HEAD
-=======
-// We load json files as data source
-let SALES = {};
-
->>>>>>> fbb68ff (docs(api): create the workhop 4 about api with express)
 app.use(bodyParser.json());
 app.use(cors());
 app.use(helmet());
-app.use(cors())
+
+const extractSetId = (deal) => {
+  const fromTitle = deal.title?.match(/\b\d{4,6}\b/);
+  if (fromTitle) {
+    return fromTitle[0];
+  }
+
+  const fromLink = deal.link?.match(/-(\d{4,6})(?:-|$)/);
+  return fromLink ? fromLink[1] : null;
+};
+
+const toPublishedTimestamp = (datePublication) => {
+  if (!datePublication) {
+    return null;
+  }
+
+  const [day, month, year] = datePublication.split('/').map(Number);
+  if (!day || !month || !year) {
+    return null;
+  }
+
+  return Math.floor(Date.UTC(year, month - 1, day) / 1000);
+};
+
+const toDiscountValue = (percentage) => {
+  if (!percentage) {
+    return null;
+  }
+
+  const parsed = Number(String(percentage).replace(/[^0-9.-]/g, ''));
+  return Number.isNaN(parsed) ? null : Math.abs(parsed);
+};
+
+const normalizeDeal = (deal) => ({
+  _id: deal.uuid,
+  link: deal.link,
+  retail: deal.prixOriginel,
+  price: deal.prixReduit,
+  discount: toDiscountValue(deal.pourcentageReduction),
+  temperature: deal.temperature,
+  comments: deal.nombreCommentaire,
+  published: toPublishedTimestamp(deal.datePublication),
+  title: deal.title,
+  id: extractSetId(deal),
+  community: 'dealabs',
+  merchant: deal.merchant,
+});
+
+const sortDeals = (deals, filterBy) => {
+  if (filterBy === 'best-discount') {
+    return [...deals].sort((a, b) => (b.discount || 0) - (a.discount || 0));
+  }
+
+  if (filterBy === 'most-commented') {
+    return [...deals].sort((a, b) => (b.comments || 0) - (a.comments || 0));
+  }
+
+  return [...deals].sort((a, b) => a.price - b.price);
+};
 
 app.get('/', (request, response) => {
   response.send({'ack': true});
 });
 
-app.get('/sales/search', (request, response) => {
-  response.setHeader('Access-Control-Allow-Credentials', true)
-  response.setHeader('Access-Control-Allow-Origin', '*')
-  response.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT')
-  response.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-  )
+app.get('/deals/search', (request, response) => {
+  const limit = Math.max(Number.parseInt(request.query.limit, 10) || 12, 1);
+  const maxPrice = request.query.price ? Number(request.query.price) : null;
+  const minPublished = request.query.date
+    ? Math.floor(new Date(request.query.date).getTime() / 1000)
+    : null;
+  const filterBy = request.query.filterBy;
 
-  try {
-    const { legoSetId } = request.query;
-    const result = SALES[legoSetId] || []
+  const filteredDeals = DEALS
+    .map(normalizeDeal)
+    .filter((deal) => {
+      if (maxPrice !== null && Number.isFinite(maxPrice) && deal.price > maxPrice) {
+        return false;
+      }
 
-    return response.status(200).json({
-      'success': true,
-      'data': {'result': result}
+      if (minPublished !== null && Number.isFinite(minPublished) && (deal.published || 0) < minPublished) {
+        return false;
+      }
+
+      return true;
     });
-  } catch (error) {
-    console.log(error);
-    return response.status(404).send({
-      'success': false,
-      'data': {'result': []}
+
+  const sortedDeals = sortDeals(filteredDeals, filterBy);
+  const results = sortedDeals.slice(0, limit);
+
+  return response.status(200).json({
+    limit,
+    total: filteredDeals.length,
+    results,
+  });
+});
+
+app.get('/deals/:id', (request, response) => {
+  const deal = DEALS.find((item) => item.uuid === request.params.id);
+
+  if (!deal) {
+    return response.status(404).json({
+      success: false,
+      error: 'Deal not found',
     });
   }
+
+  return response.status(200).json(normalizeDeal(deal));
+});
+
+app.get('/sales/search', (request, response) => {
+  const limit = Math.max(Number.parseInt(request.query.limit, 10) || 12, 1);
+  const { legoSetId } = request.query;
+
+  const salesSource = legoSetId
+    ? (SALES[legoSetId] || [])
+    : Object.values(SALES).flat();
+
+  const normalizedSales = salesSource
+    .map((sale) => ({
+      _id: sale.uuid,
+      link: sale.link,
+      price: sale.price?.amount,
+      title: sale.title,
+      published: sale.published,
+    }))
+    .sort((a, b) => (b.published || 0) - (a.published || 0));
+
+  const results = normalizedSales.slice(0, limit);
+
+  return response.status(200).json({
+    limit,
+    total: normalizedSales.length,
+    results,
+  });
 });
 
 
-<<<<<<< HEAD
 app.listen(PORT)
-=======
-app.listen(PORT, () => {
-  // when we start the server we load available json files
-  try {
-    SALES = JSON.parse(
-      readFileSync(path.join(__dirname, 'sources', 'vinted.json'), 'utf8')
-    );
-  } catch (error) {
-    console.warn(`⚠️  ${error}`);
-  }
-})
->>>>>>> fbb68ff (docs(api): create the workhop 4 about api with express)
 
 console.log(`📡 Running on port ${PORT}`);
