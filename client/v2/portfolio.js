@@ -35,6 +35,8 @@ const btnFilterMostCommented = document.querySelector('#filterMostCommented');
 const btnFilterHotDeals = document.querySelector('#filterHotDeals');
 const btnFilterFavorites = document.querySelector('#filterFavorites');
 
+const getDealKey = (deal) => deal?._id || deal?.uuid || '';
+
 const setFavorites = (nextFavorites) => {
   favorites = nextFavorites;
   localStorage.setItem('favorites', JSON.stringify(favorites));
@@ -52,9 +54,11 @@ const fetchDeals = async () => {
   }
 };
 
-const fetchSales = async (legoSetId) => {
+const fetchSales = async (legoSetId, dealTitle = '') => {
   try {
-    const response = await fetch(`${API_BASE}/sales/search?legoSetId=${encodeURIComponent(legoSetId)}&limit=1000`);
+    const response = await fetch(
+      `${API_BASE}/sales/search?legoSetId=${encodeURIComponent(legoSetId)}&keywords=${encodeURIComponent(dealTitle)}&limit=1000`
+    );
     const body = await response.json();
     return Array.isArray(body.results) ? body.results : [];
   } catch (error) {
@@ -79,11 +83,7 @@ const calculateVintedAverage = (sales) => {
 const enrichDealsWithVintedAverages = async (deals) => {
   const enriched = await Promise.all(
     deals.map(async (deal) => {
-      if (!deal.id) {
-        return { ...deal, vintedAverage: 0 };
-      }
-
-      const sales = await fetchSales(deal.id);
+      const sales = await fetchSales(deal.id || '', deal.title || '');
       return {
         ...deal,
         vintedAverage: calculateVintedAverage(sales),
@@ -232,10 +232,11 @@ const renderDeals = (deals) => {
     const vintedPrice = parseFloat(deal.vintedAverage) || 0;
     const profit = vintedPrice > 0 ? vintedPrice - dealabsPrice : 0;
     const profitPercent = dealabsPrice > 0 ? Math.round((profit / dealabsPrice) * 100) : 0;
-    const isSaved = isDealFavorite(deal.uuid);
+    const dealKey = getDealKey(deal);
+    const isSaved = isDealFavorite(dealKey);
 
     return `
-      <div class="deal-card" id="${deal.uuid}">
+      <div class="deal-card" id="${dealKey}">
         <div class="deal-header">
           <div class="deal-image">🧱</div>
           <div class="deal-title-section">
@@ -266,8 +267,8 @@ const renderDeals = (deals) => {
           </div>
         </div>
         <div class="deal-footer">
-          <button class="btn-save ${isSaved ? 'saved' : ''}" data-uuid="${deal.uuid}">${isSaved ? '❤️ Saved' : '🤍 Save'}</button>
-          <button class="btn-details" data-uuid="${deal.uuid}">Details</button>
+          <button class="btn-save ${isSaved ? 'saved' : ''}" data-uuid="${dealKey}">${isSaved ? '❤️ Saved' : '🤍 Save'}</button>
+          <button class="btn-details" data-uuid="${dealKey}">Details</button>
         </div>
       </div>
     `;
@@ -308,7 +309,7 @@ const renderView = () => {
   visibleDeals = filterDeals(visibleDeals, currentFilter);
 
   if (showFavoritesOnly) {
-    visibleDeals = visibleDeals.filter((deal) => isDealFavorite(deal.uuid));
+    visibleDeals = visibleDeals.filter((deal) => isDealFavorite(getDealKey(deal)));
   }
 
   visibleDeals = sortDeals(visibleDeals, currentSort);
@@ -423,7 +424,8 @@ selectLegoSetIds?.addEventListener('change', async (event) => {
     return;
   }
 
-  const sales = await fetchSales(id);
+  const currentDeal = allDeals.find((deal) => String(deal.id) === String(id));
+  const sales = await fetchSales(id, currentDeal?.title || '');
   renderSalesStats(sales);
 });
 

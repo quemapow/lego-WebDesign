@@ -13,8 +13,10 @@ const fetchDealData = async () => {
   return Array.isArray(body.results) ? body.results : [];
 };
 
-const fetchVintedSales = async (legoSetId) => {
-  const response = await fetch(`${API_BASE}/sales/search?legoSetId=${encodeURIComponent(legoSetId)}&limit=1000`);
+const fetchVintedSales = async (legoSetId, dealTitle = '') => {
+  const response = await fetch(
+    `${API_BASE}/sales/search?legoSetId=${encodeURIComponent(legoSetId)}&keywords=${encodeURIComponent(dealTitle)}&limit=1000&live=1`
+  );
   const body = await response.json();
   return Array.isArray(body.results) ? body.results : [];
 };
@@ -121,14 +123,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   const deals = await fetchDealData();
-  const deal = deals.find((item) => item.uuid === dealUuid);
+  const deal = deals.find((item) => (item._id || item.uuid) === dealUuid);
 
   if (!deal) {
     document.getElementById('productTitle').textContent = 'Deal not found';
     return;
   }
 
-  const sales = deal.id ? await fetchVintedSales(deal.id) : [];
+  const sales = await fetchVintedSales(deal.id || '', deal.title || '');
   const vintedAvgPrice = calculateVintedAverage(sales);
 
   displayDealDetails(deal, vintedAvgPrice);
