@@ -117,3 +117,5 @@ serverless
 products.json
 
 next
+.vercel
+.env*.local

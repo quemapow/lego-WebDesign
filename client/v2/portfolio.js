@@ -1,6 +1,9 @@
 'use strict';
 
-const API_BASE = 'http://localhost:8092';
+// Use relative path so it works both locally and on Vercel
+const API_BASE = typeof window !== 'undefined' && window.location.hostname !== 'localhost' 
+  ? '' 
+  : 'http://localhost:8092';
 
 let allDeals = [];
 let favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
