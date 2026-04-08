@@ -1,9 +1,27 @@
 {
   "version": 2,
+  "buildCommand": "cd server && yarn install",
+  "public": "./client/v2",
   "routes": [
     {
-      "src": "/(.*)",
+      "src": "/api/(.*)",
       "dest": "/api/index.js"
+    },
+    {
+      "src": "/deals/(.*)",
+      "dest": "/api/index.js"
+    },
+    {
+      "src": "/sales/(.*)",
+      "dest": "/api/index.js"
+    },
+    {
+      "src": "/(.*\\.(?:js|css|png|jpg|jpeg|gif|svg|woff|woff2))",
+      "dest": "/client/v2/$1"
+    },
+    {
+      "src": "/",
+      "dest": "/client/v2/index.html"
     }
   ]
 }
