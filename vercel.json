@@ -1,29 +1,3 @@
 {
-  "version": 2,
-  "buildCommand": "cd server && yarn install",
-  "devCommand": "cd server && yarn dev",
-  "functions": {
-    "server/index.js": {
-      "memory": 512,
-      "maxDuration": 30
-    }
-  },
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/server/index.js"
-    },
-    {
-      "src": "/(.*\\.(?:js|css|png|jpg|jpeg|gif|svg|woff|woff2|eot|ttf|otf))",
-      "dest": "/client/v2/$1"
-    },
-    {
-      "src": "/",
-      "dest": "/client/v2/index.html"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/server/index.js"
-    }
-  ]
+  "version": 2
 }
