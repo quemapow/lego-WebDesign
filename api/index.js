@@ -1,7 +1,6 @@
-// Vercel serverless function handler
+// Vercel serverless function handler with serverless-http
+import serverless from 'serverless-http';
 import app from '../server/api.js';
 
-export default function handler(req, res) {
-  // Handle as Express middleware
-  return app(req, res);
-}
+// Wrap Express app for Vercel
+export default serverless(app);
