@@ -1,6 +1,9 @@
 'use strict';
 
-const API_BASE = 'http://localhost:8092';
+// API endpoint - uses deployed server URL in production, localhost in development
+const API_BASE = typeof window !== 'undefined' && window.location.hostname === 'localhost' 
+  ? 'http://localhost:8092'
+  : 'https://lego-web-design-server.vercel.app';
 
 const getQueryParam = (param) => {
   const urlParams = new URLSearchParams(window.location.search);
