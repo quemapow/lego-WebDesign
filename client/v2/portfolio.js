@@ -1,9 +1,9 @@
 'use strict';
 
-// Use relative path so it works both locally and on Vercel
-const API_BASE = typeof window !== 'undefined' && window.location.hostname !== 'localhost' 
-  ? '' 
-  : 'http://localhost:8092';
+// API endpoint - uses deployed server URL in production, localhost in development
+const API_BASE = typeof window !== 'undefined' && window.location.hostname === 'localhost' 
+  ? 'http://localhost:8092'
+  : 'https://lego-web-design-server.vercel.app';
 
 let allDeals = [];
 let favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
