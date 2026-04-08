@@ -1,0 +1,25 @@
+{
+  "version": 2,
+  "buildCommand": "cd server && yarn install",
+  "devCommand": "cd server && yarn dev",
+  "public": "client/v2",
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/api/",
+      "permanent": false
+    }
+  ],
+  "functions": {
+    "server/index.js": {
+      "memory": 512,
+      "maxDuration": 30
+    }
+  },
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/server/index.js"
+    }
+  ]
+}

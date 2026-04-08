@@ -1,7 +1,22 @@
 {
   "version": 2,
   "builds": [
-    {"src": "*.js", "use": "@vercel/node"},
-    {"src": "*.json", "use": "@vercel/node"}],
-  "routes": [{"src": "/(.*)", "dest": "api.js"}]
+    {
+      "src": "index.js",
+      "use": "@vercel/node",
+      "config": {
+        "maxLambdaSize": "50mb",
+        "nodeVersion": "20.x"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "index.js"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
 }

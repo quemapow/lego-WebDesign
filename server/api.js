@@ -301,15 +301,23 @@ app.get('/sales/search', (request, response) => {
 });
 
 
-const server = app.listen(PORT, () => {
-  console.log(`📡 Running on port ${PORT}`);
-});
 
-server.on('error', (error) => {
-  if (error.code === 'EADDRINUSE') {
-    console.error(`Port ${PORT} is already in use. Stop the existing server before starting a new one.`);
-    process.exit(1);
-  }
 
-  throw error;
-});
+// Export for Vercel
+export default app;
+
+// Local development only
+if (process.env.NODE_ENV !== 'production') {
+  const server = app.listen(PORT, () => {
+    console.log(`📡 Running on port ${PORT}`);
+  });
+
+  server.on('error', (error) => {
+    if (error.code === 'EADDRINUSE') {
+      console.error(`Port ${PORT} is already in use. Stop the existing server before starting a new one.`);
+      process.exit(1);
+    }
+
+    throw error;
+  });
+}
